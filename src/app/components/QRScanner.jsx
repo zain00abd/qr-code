@@ -1,36 +1,37 @@
 "use client"
-import { useState } from "react";
-import dynamic from "next/dynamic";
-
-// تحميل مكتبة react-qr-reader فقط على جانب العميل
-const QrReader = dynamic(() => import("react-qr-reader"), { ssr: false });
+import { useEffect, useState } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 const QRScanner = () => {
   const [scanResult, setScanResult] = useState(null);
+  const qrCodeRegionId = "qr-reader";
 
-  const handleScan = (data) => {
-    if (data) {
-      setScanResult(data);
-    }
+  const handleScanSuccess = (decodedText) => {
+    setScanResult(decodedText);
   };
 
-  const handleError = (err) => {
-    console.error(err);
-  };
+  useEffect(() => {
+    const html5QrcodeScanner = new Html5Qrcode(qrCodeRegionId);
+    html5QrcodeScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      handleScanSuccess
+    ).catch((err) => console.error("Unable to start QR scanner", err));
+
+    return () => {
+      html5QrcodeScanner.stop().catch((err) => console.error("Unable to stop QR scanner", err));
+    };
+  }, []);
 
   return (
     <div>
       <h1>QR Scanner</h1>
-      <QrReader
-        delay={300}
-        onError={handleError}
-        onScan={handleScan}
-        style={{ width: "100%" }}
-      />
+      <div id={qrCodeRegionId} style={{ width: "100%" }}></div>
       {scanResult && <p>Scanned Data: {scanResult}</p>}
     </div>
   );
 };
 
 export default QRScanner;
+
 
