@@ -1,46 +1,44 @@
-"use client"
-import { useEffect, useState } from "react";
-import { Html5Qrcode } from "html5-qrcode";
+// components/QRScanner.jsx
+"use client";
+
+import React, { useEffect } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
 const QRScanner = () => {
-  const [scanResult, setScanResult] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const qrCodeRegionId = "qr-reader";
-
-  const handleScanSuccess = (decodedText) => {
-    setScanResult(decodedText);
-    setErrorMessage(null); // مسح رسالة الخطأ عند نجاح المسح
-  };
-
   useEffect(() => {
-    const html5QrcodeScanner = new Html5Qrcode(qrCodeRegionId);
+    const scanner = new Html5QrcodeScanner("reader", {
+      qrbox: { width: 250, height: 250 },
+      fps: 20,
+    });
 
-    html5QrcodeScanner
-      .start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        handleScanSuccess
-      )
-      .catch((err) => {
-        
-        setErrorMessage("لا يمكن الوصول إلى الكاميرا. تأكد من توفر كاميرا ومنح الأذونات اللازمة.");
-      });
+    const success = (result) => {
+      console.log(result);
+      document.getElementById("result").innerHTML = `
+        <h2>نجاح!</h2>
+        <p><a href="${result}" target="_blank">${result}</a></p>
+      `;
+
+      scanner.clear();
+      document.getElementById("reader").remove();
+    };
+
+    const error = (err) => {
+      console.error(err);
+    };
+
+    scanner.render(success, error);
 
     return () => {
-      html5QrcodeScanner.stop().catch((err) => console.error("Unable to stop QR scanner", err));
+      scanner.clear(); // تنظيف عند إزالة المكون
     };
   }, []);
 
   return (
-    <div>
-      <h1>QR Scanner</h1>
-      <div id={qrCodeRegionId} style={{ width: "100%" }}></div>
-      {scanResult && <p>Scanned Data: {scanResult}</p>}
-      {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-    </div>
+    <main style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
+      <div id="reader" style={{ width: "600px" }}></div>
+      <div id="result" style={{ textAlign: "center", fontSize: "1.5rem" }}></div>
+    </main>
   );
 };
 
 export default QRScanner;
-
-
